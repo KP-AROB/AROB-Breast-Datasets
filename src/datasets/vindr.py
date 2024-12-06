@@ -55,13 +55,11 @@ class VindrDataframeLoader(object):
 class VindrLesionDataset(VindrDataframeLoader, Dataset):
 
     def __init__(self, data_dir: str, pipeline: BasePipeline, is_train: bool = True):
-        VindrDataframeLoader.__init__(
-            self, data_dir=data_dir)
-        Dataset.__init__(self)
-
+        
+        self.df_loader = VindrDataframeLoader(data_dir)
         self.pipeline = pipeline
-        self.class_list = ['no_finding', 'mass', 'suspicious_calcifications']
-        self.df = self.load_df(is_train)
+        self.class_list = ['no_finding', 'mass', 'suspicious_calcification']
+        self.df = self.df_loader.load_df(is_train)
         self.df = self.df[self.df['finding_categories'].apply(lambda x: self.contains_all_classes(x, self.class_list))]
         self.replace_categories(self.df, 'finding_categories', self.class_list)
         self.targets = self.df['finding_categories'].values
@@ -74,5 +72,5 @@ class VindrLesionDataset(VindrDataframeLoader, Dataset):
         sample_path = os.path.join(
             self.data_dir, 'images', row['study_id'], row['image_id'] + '.dicom')
         image = self.pipeline.process(sample_path)
-        label = self.class_list.index(row['finding_categories'])
+        label = self.targets[idx]
         return image, label

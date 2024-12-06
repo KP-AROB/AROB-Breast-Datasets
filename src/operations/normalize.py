@@ -21,6 +21,10 @@ def truncate_normalization(image_mask: tuple):
     Pmin = np.percentile(img[mask != 0], 2)
     Pmax = np.percentile(img[mask != 0], 99)
     truncated = np.clip(img, Pmin, Pmax)
+    if Pmax != Pmin:
+        normalized = (truncated - Pmin) / (Pmax - Pmin)
+    else:
+        normalized = np.zeros_like(truncated)
     normalized = (truncated - Pmin) / (Pmax - Pmin)
     normalized[mask == 0] = 0
     return normalized
