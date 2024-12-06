@@ -6,7 +6,7 @@ from glob import glob
 
 class InbreastDataset(Dataset):
 
-    def __init__(self, data_dir: str, pipeline: BasePipeline, task = 'lesion'):
+    def __init__(self, data_dir: str, pipeline: BasePipeline, task = 'lesions'):
         super().__init__()
         self.data_dir = data_dir
         self.pipeline = pipeline

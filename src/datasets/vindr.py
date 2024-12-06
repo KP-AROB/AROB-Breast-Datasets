@@ -55,7 +55,7 @@ class VindrDataframeLoader(object):
 class VindrLesionDataset(VindrDataframeLoader, Dataset):
 
     def __init__(self, data_dir: str, pipeline: BasePipeline, is_train: bool = True):
-        
+        self.data_dir = data_dir
         self.df_loader = VindrDataframeLoader(data_dir)
         self.pipeline = pipeline
         self.class_list = ['no_finding', 'mass', 'suspicious_calcification']
