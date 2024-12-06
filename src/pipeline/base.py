@@ -1,32 +1,34 @@
-import inspect
-from typing import Generator
+from typing import List, Callable
 
 
-class BasePipeline(object):
+class BasePipeline:
     def __init__(self):
-        self._operations = []
-
-    def add_operation(self, ops: Generator):
-        """Add a processing operation to the pipeline
-
-        Args:
-            ops (Generator): The processing generator
-
-        Raises:
-            TypeError: throws an error if the function passed is not a generator
         """
-        if inspect.isgeneratorfunction(ops):
-            self._operations.append(ops)
-        else:
-            raise TypeError(f"{ops.__name__} is not a Generator")
+        Initializes the Pipeline with an empty list of operations.
+        """
+        self.operations: List[Callable] = []
 
-    def process(self, source: str):
-        """Runs the pipeline.
-        Args:
-            source (str): The .dicom file path
+    def add_operation(self, operation: Callable):
+        """
+        Adds a pre-processing operation to the pipeline.
+
+        Parameters:
+        operation (Callable): A function that takes an image as input and returns the processed image.
+        """
+        if not callable(operation):
+            raise ValueError("The operation must be a callable function.")
+        self.operations.append(operation)
+
+    def process(self, image):
+        """
+        Processes an image through the pipeline.
+
+        Parameters:
+        image: The input image to be processed.
+
         Returns:
-            np.array: The processed data
+        The processed image after applying all operations in the pipeline.
         """
-        for ops in self._operations:
-            source = ops(source)
-        return source
+        for operation in self.operations:
+            image = operation(image)
+        return image

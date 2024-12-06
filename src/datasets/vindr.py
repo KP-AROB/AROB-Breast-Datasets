@@ -1,15 +1,14 @@
 import pandas as pd
 import os
 import ast
-from .base import AbstractBreastDataset
+from torch.utils.data import Dataset
 from src.pipeline.base import BasePipeline
 
 
 class VindrDataframeLoader(object):
 
-    def __init__(self, data_dir: str, class_list: list):
+    def __init__(self, data_dir: str):
         self.data_dir = data_dir
-        self.class_list = class_list
         self.birads_mapping = {
             'bi-rads_1': 'bi-rads_1',
             'bi-rads_2': 'bi-rads_2',
@@ -48,23 +47,23 @@ class VindrDataframeLoader(object):
             self.format_char)
         df_find['breast_birads'] = df_find['breast_birads'].replace(
             self.birads_mapping)
-        df_find = df_find[df_find['finding_categories'].apply(
-            lambda x: self.contains_all_classes(x, self.class_list))]
-        self.replace_categories(df_find, 'finding_categories', self.class_list)
         split_name = 'training' if is_train else 'test'
         df_find = df_find[df_find['split'] == split_name]
         return df_find
 
 
-class VindrLesionDataset(VindrDataframeLoader, AbstractBreastDataset):
+class VindrLesionDataset(VindrDataframeLoader, Dataset):
 
     def __init__(self, data_dir: str, pipeline: BasePipeline, is_train: bool = True):
-        class_list = ['no_finding', 'mass', 'suspicious_calcifications']
         VindrDataframeLoader.__init__(
-            self, data_dir=data_dir, class_list=class_list)
-        AbstractBreastDataset.__init__(self, pipeline=pipeline)
+            self, data_dir=data_dir)
+        Dataset.__init__(self)
 
+        self.pipeline = pipeline
+        self.class_list = ['no_finding', 'mass', 'suspicious_calcifications']
         self.df = self.load_df(is_train)
+        self.df = self.df[self.df['finding_categories'].apply(lambda x: self.contains_all_classes(x, self.class_list))]
+        self.replace_categories(self.df, 'finding_categories', self.class_list)
         self.targets = self.df['finding_categories'].values
 
     def __len__(self):
@@ -74,4 +73,6 @@ class VindrLesionDataset(VindrDataframeLoader, AbstractBreastDataset):
         row = self.df.iloc[idx]
         sample_path = os.path.join(
             self.data_dir, 'images', row['study_id'], row['image_id'] + '.dicom')
-        return self.pipeline.process(sample_path)
+        image = self.pipeline.process(sample_path)
+        label = self.class_list.index(row['finding_categories'])
+        return image, label
