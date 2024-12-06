@@ -1,5 +1,6 @@
 from pydicom import dcmread
 from pydicom.pixels import apply_voi_lut
+from src.operations.normalize import normalize_int8
 import numpy as np
 
 
@@ -19,4 +20,4 @@ def read_dicom(path: str):
     img2d = apply_voi_lut(img2d, ds)
     if ds.PhotometricInterpretation == "MONOCHROME1":
         img2d = np.amax(img2d) - img2d
-    return img2d
+    return normalize_int8(img2d)
