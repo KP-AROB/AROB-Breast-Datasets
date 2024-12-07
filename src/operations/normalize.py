@@ -8,6 +8,18 @@ def normalize_int8(image: np.array):
     ).astype(np.uint8)
 
 
+def clahe(img, clip=1.5):
+    """
+    Image enhancement.
+    @img : numpy array image
+    @clip : float, clip limit for CLAHE algorithm
+    return: numpy array of the enhanced image
+    """
+    clahe = cv2.createCLAHE(clipLimit=clip)
+    cl = clahe.apply(img)
+    return cl
+
+
 def truncate_normalization(image_mask: tuple):
     """Normalize an image within a given ROI mask
 
@@ -25,6 +37,5 @@ def truncate_normalization(image_mask: tuple):
         normalized = (truncated - Pmin) / (Pmax - Pmin)
     else:
         normalized = np.zeros_like(truncated)
-    normalized = (truncated - Pmin) / (Pmax - Pmin)
     normalized[mask == 0] = 0
     return normalized

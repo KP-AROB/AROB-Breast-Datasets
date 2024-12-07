@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from .normalize import clahe
 
 
 def crop_to_roi(image: np.array):
@@ -11,9 +12,11 @@ def crop_to_roi(image: np.array):
     Returns:
         tuple (list, list): (cropped_images, rois)
     """
-    blur = cv2.GaussianBlur(image, (5, 5), 0)
+    original_image = image[100:-100, 100:-100]
+    image = clahe(original_image, 1.0)
+
     _, breast_mask = cv2.threshold(
-        blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     cnts, _ = cv2.findContours(
         breast_mask.astype(
@@ -21,10 +24,10 @@ def crop_to_roi(image: np.array):
     )
     cnt = max(cnts, key=cv2.contourArea)
     x, y, w, h = cv2.boundingRect(cnt)
-    return (image[y: y + h, x: x + w], breast_mask[y: y + h, x: x + w])
+    return (original_image[y: y + h, x: x + w], breast_mask[y: y + h, x: x + w])
 
 
-def resize(image: np.array, new_size = 256):
+def resize_square(image: np.array, new_size=256):
     return cv2.resize(
         image,
         (new_size, new_size),

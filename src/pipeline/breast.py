@@ -1,7 +1,7 @@
 
 from .base import BasePipeline
 from src.operations.read import read_dicom
-from src.operations.transform import crop_to_roi, resize
+from src.operations.transform import crop_to_roi, resize_square
 from src.operations.normalize import truncate_normalization, normalize_int8
 
 
@@ -12,6 +12,6 @@ class BreastImageProcessingPipeline(BasePipeline):
             read_dicom,
             crop_to_roi,
             truncate_normalization,
-            lambda image: resize(image, new_size=256),
+            resize_square,
             normalize_int8
         ]

@@ -1,0 +1,13 @@
+albumentations==1.4.21
+monai==1.4.0
+numpy==1.26.4
+opencv-python==4.10.0.84
+pandas==2.2.3
+pillow==11.0.0
+pydicom==3.0.1
+PyYAML==6.0.2
+scikit-image==0.24.0
+scikit-learn==1.5.2
+torch==2.4.1
+torchvision==0.19.1
+tqdm==4.66.6

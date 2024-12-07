@@ -56,13 +56,18 @@ class VindrLesionDataset(VindrDataframeLoader, Dataset):
 
     def __init__(self, data_dir: str, pipeline: BasePipeline, is_train: bool = True):
         self.data_dir = data_dir
-        self.df_loader = VindrDataframeLoader(data_dir)
         self.pipeline = pipeline
         self.class_list = ['no_finding', 'mass', 'suspicious_calcification']
-        self.df = self.df_loader.load_df(is_train)
-        self.df = self.df[self.df['finding_categories'].apply(lambda x: self.contains_all_classes(x, self.class_list))]
-        self.replace_categories(self.df, 'finding_categories', self.class_list)
+        self.df = self.load_dataframe()
         self.targets = self.df['finding_categories'].values
+
+    def load_dataframe(self):
+        df_loader = VindrDataframeLoader(self.data_dir)
+        df = df_loader.load_df(self.is_train)
+        df = df[df['finding_categories'].apply(
+            lambda x: self.contains_all_classes(x, self.class_list))]
+        self.replace_categories(df, 'finding_categories', self.class_list)
+        return df
 
     def __len__(self):
         return len(self.df)

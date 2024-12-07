@@ -17,9 +17,11 @@ class CBISDataframeLoader(object):
             logging.info('Corrected csv files not found. Creating ...')
             self.correct_metadata_files(data_dir)
             logging.info(f'Corrected csv files saved at {data_dir}')
-        
-        self.df_mass = pd.read_csv(os.path.join(data_dir, f'mass_case_description_{self.mode}_set_corrected.csv'))
-        self.df_calc = pd.read_csv(os.path.join(data_dir, f'calc_case_description_{self.mode}_set_corrected.csv'))
+
+        self.df_mass = pd.read_csv(os.path.join(
+            data_dir, f'mass_case_description_{self.mode}_set_corrected.csv'))
+        self.df_calc = pd.read_csv(os.path.join(
+            data_dir, f'calc_case_description_{self.mode}_set_corrected.csv'))
 
     def normalize_and_format_path(self, path: str) -> str:
         if path.startswith(".\\"):
@@ -34,14 +36,12 @@ class CBISDataframeLoader(object):
             path_parts[-1] = f"{number}-{''.join(rest)}"
         return "/".join(path_parts)
 
-
     def get_image_path_ids(self, row, key):
         path = row[key]
         path_segment = path.split(os.sep)
         study_id = path_segment[1]
         series_uid = path_segment[2]
         return study_id, series_uid
-
 
     def correct_metadata_files(self):
 
@@ -98,18 +98,30 @@ class CBISDataframeLoader(object):
         logging.info(f'Corrected csv files saved at {self.data_dir}')
 
 
-class CBISMassDataset(Dataset):
+class CBISLesionDataset(Dataset):
 
     def __init__(self, data_dir: str, pipeline: BasePipeline, is_train: bool = True):
-        super().__init__(self)
-
+        super().__init__()
         self.data_dir = data_dir
+        self.is_train = is_train
         self.pipeline = pipeline
-        self.df_loader = CBISDataframeLoader(data_dir, is_train)
-        self.df = self.df_loader.df_mass
+        self.df = self.load_dataframe()
+        self.targets = self.df['abnormality type'].values
+
+    def load_dataframe(self):
+        df_loader = CBISDataframeLoader(self.data_dir, self.is_train)
+        df_mass = df_loader.df_mass
+        df_calc = df_loader.df_calc
+        return pd.concat([df_mass, df_calc])
 
     def __len__(self):
         return len(self.df)
 
     def __getitem__(self, idx):
-        pass
+        row = self.df.iloc[idx]
+        image_path = os.path.join(
+            self.data_dir, row['image_file_path'])
+        image = glob(image_path + '/*.dcm')[0]
+        image = self.pipeline.process(image)
+        label = self.targets[idx]
+        return image, label
