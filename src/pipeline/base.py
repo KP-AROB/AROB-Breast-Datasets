@@ -1,4 +1,5 @@
 from typing import List, Callable
+from src.operations.read import read_dicom
 
 
 class BasePipeline:

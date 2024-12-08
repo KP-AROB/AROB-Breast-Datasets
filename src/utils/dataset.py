@@ -5,7 +5,7 @@ from torch.utils.data import random_split
 
 def get_datasets(name: str, data_dir: str, task: str, pipeline: BasePipeline):
     if name == "vindr":
-        vindr_tasks = ['lesions', 'birads', 'anomalies']
+        vindr_tasks = ['lesions']
         if task not in vindr_tasks:
             raise ValueError('task must be of {}'.format(vindr_tasks))
         train_dataset = VindrLesionDataset(data_dir, pipeline, True)

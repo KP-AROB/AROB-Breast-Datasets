@@ -52,10 +52,11 @@ class VindrDataframeLoader(object):
         return df_find
 
 
-class VindrLesionDataset(VindrDataframeLoader, Dataset):
+class VindrLesionDataset(Dataset):
 
     def __init__(self, data_dir: str, pipeline: BasePipeline, is_train: bool = True):
         self.data_dir = data_dir
+        self.is_train = is_train
         self.pipeline = pipeline
         self.class_list = ['no_finding', 'mass', 'suspicious_calcification']
         self.df = self.load_dataframe()
@@ -65,8 +66,8 @@ class VindrLesionDataset(VindrDataframeLoader, Dataset):
         df_loader = VindrDataframeLoader(self.data_dir)
         df = df_loader.load_df(self.is_train)
         df = df[df['finding_categories'].apply(
-            lambda x: self.contains_all_classes(x, self.class_list))]
-        self.replace_categories(df, 'finding_categories', self.class_list)
+            lambda x: df_loader.contains_all_classes(x, self.class_list))]
+        df_loader.replace_categories(df, 'finding_categories', self.class_list)
         return df
 
     def __len__(self):

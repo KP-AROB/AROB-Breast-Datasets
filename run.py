@@ -1,10 +1,12 @@
 import argparse
 import logging
 import os
+import numpy as np
 from src.pipeline.breast import BreastImageProcessingPipeline
 from collections import Counter
 from src.processors.image import ImageDatasetProcessor
 from src.utils.dataset import get_datasets
+from src.augmentations.classwise import ClasswiseAugmentor
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -14,6 +16,9 @@ if __name__ == "__main__":
     parser.add_argument("--data_dir", type=str, required=True)
     parser.add_argument("--out_dir", type=str, default='./data')
     parser.add_argument("--task", type=str, required=True)
+    parser.add_argument("--n_augment", type=int, default=0)
+    parser.add_argument("--augment_type", type=str,
+                        default='all',  choices=['all', 'geometric', 'photometric'])
     args = parser.parse_args()
     parser.set_defaults(synthetize=False)
 
@@ -35,11 +40,18 @@ if __name__ == "__main__":
     logging.info(f'Test dataset length : {len(test_dataset)}')
     logging.info(f'Class balance : {Counter(train_dataset.targets)}')
 
-    processor = ImageDatasetProcessor(
-        train_dataset,
-        test_dataset,
-        os.path.join(args.out_dir, args.name, args.task),
-        4
-    )
-    processor.run()
+    save_dir = os.path.join(args.out_dir, args.name, args.task)
+    # processor = ImageDatasetProcessor(
+    #     train_dataset,
+    #     test_dataset,
+    #     save_dir,
+    #     4
+    # )
+    # processor.run()
+
+    if args.n_augment > 0:
+        augmentor = ClasswiseAugmentor(save_dir + "/train", args.n_augment, np.unique(
+            train_dataset.targets), args.augment_type)
+        augmentor.run()
+
     logging.info('Preparation done.')

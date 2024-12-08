@@ -8,6 +8,8 @@ import logging
 
 
 class CBISDataframeLoader(object):
+    """Loader class to prepare CBIS dataframe
+    """
 
     def __init__(self, data_dir: str, is_train: bool):
         self.data_dir = data_dir
@@ -121,7 +123,7 @@ class CBISDataset(Dataset):
         self.pipeline = pipeline
         self.task = task
         self.df = self.load_dataframe()
-        self.targets = self.df['abnormality type'].values if task == 'lesion' else self.df['pathology'].values
+        self.targets = self.df['abnormality type'].values if task == 'lesions' else self.df['pathology'].values
 
     def load_dataframe(self):
         df_loader = CBISDataframeLoader(self.data_dir, self.is_train)

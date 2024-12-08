@@ -35,10 +35,13 @@ python run.py --name inbreast --data_dir ./data/INBreast --out_dir ./data --task
 
 | Flag                  | Description                                                                                                       | Default Value   |
 |-----------------------|-------------------------------------------------------------------------------------------------------------------|-----------------|
+| --name                | The name of the dataset to prepare                                                                                | inbreast        |
 | --data_dir            | The folder where the CBIS-DDSM dataset is stored                                                                  | None            |
 | --out_dir             | The folder where the prepared dataset will be stored                                                              | ./data          |
 | --task                | The task for which the dataset will be prepared                                                                   | 'lesions'       |
-| --name                | The name of the dataset to prepare                                                                                | inbreast        |
+| --n_augment           | The number of images to produce during augmentation                                                               | 0               |
+| --augment_type        | The type of augmentation to perform                                                                               | 'photometric'   |
+
 
 ### 3.1. Dataset task
 
@@ -54,7 +57,6 @@ We implemented different ways to prepare each datasets depending on the targette
 
 #### Vindr-Mammo
 - ```lesions```: Separates the dataset using the finding annotation labels, namely "no_finding", "mass" and "suspicious_calcification".
-- ```birads```: Separates the dataset according to the bi-rads assessments.
 
 ### 3.2. Preprocessing Pipeline
 
@@ -99,3 +101,9 @@ For each dataset and task the script will create training and testing sets based
                     - 📄 02.png
 
 This structure can then be used by a PyTorch ImageFolder dataset in any Deep Learning project.
+
+
+### 4. Todo
+
+- Add birads task for vindr
+- Add roi tasks for cbis

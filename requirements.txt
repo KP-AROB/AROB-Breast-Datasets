@@ -1,4 +1,4 @@
-albumentations==1.4.21
+albumentations==1.4.22
 monai==1.4.0
 numpy==1.26.4
 opencv-python==4.10.0.84
