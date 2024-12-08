@@ -41,13 +41,14 @@ if __name__ == "__main__":
     logging.info(f'Class balance : {Counter(train_dataset.targets)}')
 
     save_dir = os.path.join(args.out_dir, args.name, args.task)
-    # processor = ImageDatasetProcessor(
-    #     train_dataset,
-    #     test_dataset,
-    #     save_dir,
-    #     4
-    # )
-    # processor.run()
+
+    processor = ImageDatasetProcessor(
+        train_dataset,
+        test_dataset,
+        save_dir,
+        4
+    )
+    processor.run()
 
     if args.n_augment > 0:
         augmentor = ClasswiseAugmentor(save_dir + "/train", args.n_augment, np.unique(
