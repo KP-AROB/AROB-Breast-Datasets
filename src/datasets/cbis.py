@@ -22,6 +22,20 @@ class CBISDataframeLoader(object):
             data_dir, f'mass_case_description_{self.mode}_set_corrected.csv'))
         self.df_calc = pd.read_csv(os.path.join(
             data_dir, f'calc_case_description_{self.mode}_set_corrected.csv'))
+        self.make_cls_column()
+
+    def make_cls_column(self):
+        """Modify the pathology columns to have four unique class values
+        """
+        self.df_mass.loc[self.df_mass['pathology'] ==
+                         'BENIGN_WITHOUT_CALLBACK', 'pathology'] = 'BENIGN'
+        self.df_calc.loc[self.df_calc['pathology'] ==
+                         'BENIGN_WITHOUT_CALLBACK', 'pathology'] = 'BENIGN'
+
+        self.df_mass['pathology'] = self.df_mass['abnormality type'] + \
+            '_' + self.df_mass['pathology']
+        self.df_calc['pathology'] = self.df_calc['abnormality type'] + \
+            '_' + self.df_calc['pathology']
 
     def normalize_and_format_path(self, path: str) -> str:
         if path.startswith(".\\"):
@@ -98,15 +112,16 @@ class CBISDataframeLoader(object):
         logging.info(f'Corrected csv files saved at {self.data_dir}')
 
 
-class CBISLesionDataset(Dataset):
+class CBISDataset(Dataset):
 
-    def __init__(self, data_dir: str, pipeline: BasePipeline, is_train: bool = True):
+    def __init__(self, data_dir: str, pipeline: BasePipeline, task: str, is_train: bool = True):
         super().__init__()
         self.data_dir = data_dir
         self.is_train = is_train
         self.pipeline = pipeline
+        self.task = task
         self.df = self.load_dataframe()
-        self.targets = self.df['abnormality type'].values
+        self.targets = self.df['abnormality type'].values if task == 'lesion' else self.df['pathology'].values
 
     def load_dataframe(self):
         df_loader = CBISDataframeLoader(self.data_dir, self.is_train)

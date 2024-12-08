@@ -13,11 +13,14 @@ def get_datasets(name: str, data_dir: str, task: str, pipeline: BasePipeline):
     elif name == "cbis":
         cbis_tasks = [
             'lesions',
+            'lesions-severity'
         ]
+
         if task not in cbis_tasks:
             raise ValueError('task must be of {}'.format(cbis_tasks))
-        train_dataset = CBISLesionDataset(data_dir, pipeline, True)
-        test_dataset = CBISLesionDataset(data_dir, pipeline, False)
+
+        train_dataset = CBISDataset(data_dir, pipeline, task, True)
+        test_dataset = CBISDataset(data_dir, pipeline, task, False)
 
     elif name == "inbreast":
         inbreast_tasks = ['lesions', 'birads']

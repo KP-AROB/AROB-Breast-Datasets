@@ -1,3 +1,3 @@
-from .cbis import CBISLesionDataset
+from .cbis import CBISDataset
 from .inbreast import InbreastDataset
 from .vindr import VindrLesionDataset
