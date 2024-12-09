@@ -55,7 +55,8 @@ class ClasswiseAugmentor(object):
 
     def run(self):
         logging.info("Running data augmentation")
-        class_dirs = [os.path.join(self.data_dir, i) for i in self.class_list]
+        class_dirs = [os.path.join(self.data_dir, str(i))
+                      for i in self.class_list]
         for cls_path in class_dirs:
             number_of_images = glob(os.path.join(cls_path, '*.png'))
             with tqdm(total=len(number_of_images), desc=f"Augmenting {cls_path}") as pbar:
