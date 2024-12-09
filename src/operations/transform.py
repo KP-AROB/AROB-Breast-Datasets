@@ -27,7 +27,7 @@ def crop_to_roi(image: np.array):
     return (original_image[y: y + h, x: x + w], breast_mask[y: y + h, x: x + w])
 
 
-def resize_square(image: np.array, new_size=256):
+def resize_square(image: np.array, new_size=1024):
     return cv2.resize(
         image,
         (new_size, new_size),
