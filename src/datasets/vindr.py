@@ -47,6 +47,7 @@ class VindrDataframeLoader(object):
             self.format_char)
         df_find['breast_birads'] = df_find['breast_birads'].replace(
             self.birads_mapping)
+        df_find.drop_duplicates(subset='image_id', keep=False, inplace=True)
         split_name = 'training' if is_train else 'test'
         df_find = df_find[df_find['split'] == split_name]
         return df_find

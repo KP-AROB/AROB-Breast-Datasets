@@ -51,8 +51,10 @@ if __name__ == "__main__":
     processor.run()
 
     if args.n_augment > 0:
-        augmentor = ClasswiseAugmentor(save_dir + "/train", args.n_augment, np.unique(
-            train_dataset.targets), args.augment_type)
+        targets = ['mass', 'suspicious_calcification'] if args.name == 'vindr' else np.unique(
+            train_dataset.targets)
+        augmentor = ClasswiseAugmentor(
+            save_dir + "/train", args.n_augment, targets, args.augment_type)
         augmentor.run()
 
     logging.info('Preparation done.')
