@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import ast
+import logging
 from torch.utils.data import Dataset
 from src.pipeline.base import BasePipeline
 
@@ -78,6 +79,12 @@ class VindrLesionDataset(Dataset):
         row = self.df.iloc[idx]
         sample_path = os.path.join(
             self.data_dir, 'images', row['study_id'], row['image_id'] + '.dicom')
-        image = self.pipeline.process(sample_path)
-        label = self.targets[idx]
-        return image, label
+        try:
+            image = self.pipeline.process(sample_path)
+            label = self.targets[idx]
+            return image, label
+
+        except Exception as e:
+            logging.info(
+                'Could not process image {} - {}'.format(sample_path, e))
+            return None
