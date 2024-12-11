@@ -32,7 +32,7 @@ class ImageDatasetProcessor(object):
         os.makedirs(out_file_path, exist_ok=True)
 
         for img, label in zip(images, labels):
-            image_id = uuid.uuid4()
+            image_id = str(uuid.uuid4())
             label_str = str(label.item()) if torch.is_tensor(
                 label) else str(label)
             out_file_path = os.path.join(

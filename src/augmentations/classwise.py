@@ -34,8 +34,8 @@ class ClasswiseAugmentor(object):
         self.augmentation_type = augmentation_type
 
         geometric_pipeline = [
-            A.HorizontalFlip(p=0.5),
-            A.VerticalFlip(p=0.5),
+            A.Flip(p=1),
+            A.ElasticTransform(p=0.3),
             A.Rotate(limit=90, border_mode=cv2.BORDER_CONSTANT, p=0.5),
         ]
 
