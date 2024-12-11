@@ -6,7 +6,7 @@ from src.pipeline.breast import BreastImageProcessingPipeline
 from collections import Counter
 from src.processors.image import ImageDatasetProcessor
 from src.utils.dataset import get_datasets
-from src.augmentations.classwise import ClasswiseAugmentor
+from src.augmentations.balanced import BalancedAugmentor
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -16,11 +16,9 @@ if __name__ == "__main__":
     parser.add_argument("--data_dir", type=str, required=True)
     parser.add_argument("--out_dir", type=str, default='./data')
     parser.add_argument("--task", type=str, required=True)
-    parser.add_argument("--n_augment", type=int, default=0)
-    parser.add_argument("--augment_type", type=str,
-                        default='all',  choices=['all', 'geometric', 'photometric'])
+    parser.add_argument("--augment", action='store_true')
     args = parser.parse_args()
-    parser.set_defaults(synthetize=False)
+    parser.set_defaults(augment=True)
 
     # INIT
     logging_message = "[KAPTIOS-2025-BREAST-DATASETS]"
@@ -50,11 +48,9 @@ if __name__ == "__main__":
     )
     processor.run()
 
-    if args.n_augment > 0:
-        targets = ['mass', 'suspicious_calcification'] if args.name == 'vindr' else np.unique(
-            train_dataset.targets)
-        augmentor = ClasswiseAugmentor(
-            save_dir + "/train", args.n_augment, targets, args.augment_type)
+    if args.augment:
+        augmentor = BalancedAugmentor(
+            save_dir + "/train", train_dataset.targets)
         augmentor.run()
 
     logging.info('Preparation done.')
