@@ -1,7 +1,6 @@
 import argparse
 import logging
 import os
-import numpy as np
 from src.pipeline.breast import BreastImageProcessingPipeline
 from collections import Counter
 from src.processors.image import ImageDatasetProcessor
@@ -44,7 +43,7 @@ if __name__ == "__main__":
         train_dataset,
         test_dataset,
         save_dir,
-        4
+        8
     )
     processor.run()
 

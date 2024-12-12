@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import torch
 import uuid
+import concurrent.futures
 from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
 from typing import List
@@ -24,8 +25,10 @@ class ImageDatasetProcessor(object):
 
     def __create_out_directories(self, classes: List[str]):
         for cls in classes:
-            os.makedirs(os.path.join(self.save_dir, 'train', str(cls)))
-            os.makedirs(os.path.join(self.save_dir, 'test', str(cls)))
+            os.makedirs(os.path.join(self.save_dir,
+                        'train', str(cls)), exist_ok=True)
+            os.makedirs(os.path.join(self.save_dir,
+                        'test', str(cls)), exist_ok=True)
 
     def save_images_batch(self, images, labels, dataset_type):
         out_file_path = os.path.join(self.save_dir, dataset_type)
@@ -36,20 +39,28 @@ class ImageDatasetProcessor(object):
             label_str = str(label.item()) if torch.is_tensor(
                 label) else str(label)
             out_file_path = os.path.join(
-                self.save_dir, dataset_type, label_str, f'{image_id[:4]}.png')
+                self.save_dir, dataset_type, label_str, f'{image_id}.png')
             cv2.imwrite(out_file_path, img.cpu().numpy())
 
-    def run(self):
-        with tqdm(total=len(self.train_loader), desc='Preparing train dataset') as pbar:
-            for batch in self.train_loader:
+    def process_batch(self, dataset_type, dataloader):
+        with tqdm(total=len(dataloader), desc=f'Preparing {dataset_type} dataset') as pbar:
+            for batch in dataloader:
                 if batch:
                     images, labels = batch
-                    self.save_images_batch(images, labels, 'train')
+                    self.save_images_batch(images, labels, dataset_type)
                 pbar.update(1)
 
-        with tqdm(total=len(self.test_loader), desc='Preparing test dataset') as pbar:
-            for batch in self.test_loader:
-                if batch:
-                    images, labels = batch
-                    self.save_images_batch(images, labels, 'test')
-                pbar.update(1)
+    def run(self):
+        tasks = []
+        dataloaders = {
+            'train': self.train_loader,
+            'test': self.test_loader
+        }
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            for name, loader in dataloaders.items():
+                tasks.append(
+                    executor.submit(self.process_batch,
+                                    name, loader)
+                )
+            for task in concurrent.futures.as_completed(tasks):
+                task.result()
