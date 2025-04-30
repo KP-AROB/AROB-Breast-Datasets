@@ -1,64 +1,14 @@
-import pandas as pd
 import os
-import ast
 import logging
 from torch.utils.data import Dataset
 from src.pipeline.base import BasePipeline
-
-
-class VindrDataframeLoader(object):
-
-    def __init__(self, data_dir: str):
-        self.data_dir = data_dir
-        self.birads_mapping = {
-            'bi-rads_1': 'bi-rads_1',
-            'bi-rads_2': 'bi-rads_2',
-            'bi-rads_3': 'bi-rads_0',
-            'bi-rads_4': 'bi-rads_0',
-            'bi-rads_5': 'bi-rads_0'
-        }
-
-    def format_char(self, char):
-        return char.lower().replace(' ', '_')
-
-    def format_category_list(self, category_list):
-        return [self.format_char(category) for category in category_list]
-
-    def contains_all_classes(self, category_list, class_list):
-        return any(cls in category_list for cls in class_list)
-
-    def replace_categories(self, df, column, target_categories):
-        def replace_if_present(categories):
-            for target in target_categories:
-                if target in categories:
-                    return target
-            return categories
-
-        df[column] = df[column].apply(
-            lambda x: replace_if_present(x) if isinstance(x, list) else x)
-
-    def load_df(self, is_train=True):
-        df_find = pd.read_csv(os.path.join(
-            self.data_dir, 'finding_annotations.csv'))
-        df_find['finding_categories'] = df_find['finding_categories'].apply(
-            ast.literal_eval)
-        df_find['finding_categories'] = df_find['finding_categories'].apply(
-            self.format_category_list)
-        df_find['breast_birads'] = df_find['breast_birads'].apply(
-            self.format_char)
-        df_find['breast_birads'] = df_find['breast_birads'].replace(
-            self.birads_mapping)
-        df_find.drop_duplicates(subset='image_id', keep=False, inplace=True)
-        split_name = 'training' if is_train else 'test'
-        df_find = df_find[df_find['split'] == split_name]
-        return df_find
-
+from src.loaders.vindr import VindrDataframeLoader
 
 class VindrLesionDataset(Dataset):
 
-    def __init__(self, data_dir: str, pipeline: BasePipeline, is_train: bool = True, task: str = 'lesions'):
+    def __init__(self, data_dir: str, pipeline: BasePipeline, split: str = 'training', task: str = 'lesions'):
         self.data_dir = data_dir
-        self.is_train = is_train
+        self.split = split
         self.pipeline = pipeline
         self.task = task
         self.class_list = ['no_finding', 'mass', 'suspicious_calcification']
@@ -67,7 +17,7 @@ class VindrLesionDataset(Dataset):
 
     def load_dataframe(self):
         df_loader = VindrDataframeLoader(self.data_dir)
-        df = df_loader.load_df(self.is_train)
+        df = df_loader(self.split)
         if self.task == 'lesions':
             df = df[df['finding_categories'].apply(
                 lambda x: df_loader.contains_all_classes(x, self.class_list))]
@@ -100,3 +50,4 @@ class VindrLesionDataset(Dataset):
             logging.info(
                 'Could not process image {} - {}'.format(sample_path, e))
             return None
+
