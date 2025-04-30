@@ -4,10 +4,9 @@ import os
 import logging
 import numpy as np
 import h5py
-import json
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm, trange
-from typing import List, Tuple, Optional
+from typing import Tuple, Optional
 from src.operations.read import read_dicom
 from src.operations.normalize import normalize_int8
 from src.operations.transform import resize_square
@@ -62,8 +61,8 @@ class HDF5Store(object):
             h5f.flush()
 
 class VindrH5Converter(BaseH5Converter):
-    def __init__(self, data_dir: str, output_dir: str, img_size: int = 224, chunk_size: int = 1000, num_processes: int = 2, split='training'):
-        super().__init__(data_dir, output_dir, chunk_size, num_processes)
+    def __init__(self, data_dir: str, output_dir: str, img_size: int = 224, chunk_size: int = 1000, num_threads: int = 2):
+        super().__init__(data_dir, output_dir, chunk_size, num_threads)
         
         self.img_size = img_size
         self.df_loader = VindrDataframeLoader(data_dir)
@@ -86,7 +85,6 @@ class VindrH5Converter(BaseH5Converter):
             return None
 
     def convert(self, split: str = 'training'):
-        
         self._init_df(split)
         all_dicom_paths = self.df.index.tolist()
         total_files = len(all_dicom_paths)
@@ -109,7 +107,7 @@ class VindrH5Converter(BaseH5Converter):
                 dtype=[np.uint8, h5py.string_dtype(encoding='utf-8'), np.uint8, np.uint8]
             )
 
-            with ProcessPoolExecutor(max_workers=self.num_processes) as executor:
+            with ThreadPoolExecutor(max_workers=self.num_threads) as executor:
                 for result in tqdm(executor.map(self._process_dicom_image, chunk_paths), total=len(chunk_paths), desc="Processing DICOMs", leave=False):
                     if result is None:
                         continue
@@ -117,7 +115,7 @@ class VindrH5Converter(BaseH5Converter):
                     try:
                         birads_label = self.birads_dict[path]
                         lesion_label = self.lesions_dict[path]
-                    
+
                         hdf5_store.append("images", image, image.shape)
                         hdf5_store.append("image_paths", np.array(path, dtype=h5py.string_dtype(encoding='utf-8')), ())
                         hdf5_store.append("birads_labels", np.array(birads_label, dtype=np.uint8), ())

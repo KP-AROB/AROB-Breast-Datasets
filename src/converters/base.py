@@ -8,7 +8,7 @@ class BaseH5Converter:
                  data_dir: str, 
                  output_dir: str,
                  chunk_size: int = 1000,
-                 num_processes: int = None):
+                 num_threads: int = None):
         
         self.data_dir = data_dir
         self.output_dir = output_dir
@@ -16,12 +16,12 @@ class BaseH5Converter:
 
         if chunk_size <= 0:
             raise ValueError("chunk size must be positive.")
-        if num_processes is None:
-            self.num_processes = os.cpu_count()
-        elif num_processes <= 0:
-             logging.warning(f"num_processes ({num_processes}) is invalid. Using 1 process.")
-             self.num_processes = 1
+        if num_threads is None or num_threads <= 0:
+            logging.warning(f"num_threads ({num_threads}) is invalid. Using 1 process.")
+            self.num_threads = 16
+        elif num_threads <= 0:
+            self.num_threads = 16
         else:
-            self.num_processes = min(num_processes, os.cpu_count())
+            self.num_threads = num_threads 
 
-        logging.info(f"Using {self.num_processes} worker processes.")
+        logging.info(f"Using {self.num_threads} worker threads.")
