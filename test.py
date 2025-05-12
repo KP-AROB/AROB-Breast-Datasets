@@ -18,6 +18,7 @@ vindrConverter = VindrH5Converter(
     output_dir=output_path,
     img_size=224,
     chunk_size=500,
+    num_threads=16
 )
 
-vindrConverter.convert('training')
+vindrConverter.convert('test')
