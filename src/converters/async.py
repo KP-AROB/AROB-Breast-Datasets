@@ -5,7 +5,8 @@ import logging
 import h5py
 import numpy as np
 import json
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import Tuple, Optional, List
 from src.operations.read import read_dicom
 from src.operations.normalize import normalize_int8
@@ -34,17 +35,9 @@ class VindrH5Converter(BaseH5Converter):
             logging.warning(f"Failed to process {path}: {e}")
             return None 
 
-    def _process_dicom_image_in_parallel(self, image_paths: List[str]) -> Tuple[List[str], List[np.ndarray]]:
-        images = []
-
-        with ThreadPoolExecutor(max_workers=self.num_threads) as executor:
-            futures = {executor.submit(self._process_dicom_image, path): path for path in image_paths}
-
-            for future in tqdm(as_completed(futures), total=len(futures), desc="Processing images"):
-                result = future.result()
-                if result is not None:
-                    images.append(result)
-        return images
+    async def _process_dicom_image_async(self, path, executor):
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(executor, self._process_dicom_image, path)
 
     def save_data_to_h5(self,  
         index: int, 
@@ -59,7 +52,29 @@ class VindrH5Converter(BaseH5Converter):
             birads_dataset.attrs['label_mapping'] = json.dumps(self.df_loader.birads_mapping)
             lesions_dataset.attrs['label_mapping'] = json.dumps(self.df_loader.lesions_mapping)
         logging.info(f"Saved chunk {index} to {hdf5_filename}")
+    
+    async def process_dicom_files(self, paths):
+        executor = ThreadPoolExecutor(max_workers=self.num_threads) 
+        batch_idx = 0
         
+        image_batch = []
+        birads_batch = [self.birads_dict[path] for path in paths]
+        lesions_batch = [self.lesions_dict[path] for path in paths]
+            
+        for i, path in enumerate(paths):
+            image = await self._process_dicom_image_async(path, executor)
+            image_batch.append(image)
+            
+            if len(image_batch) >= self.chunk_size:
+                loop = asyncio.get_running_loop()
+                await loop.run_in_executor(None, self.save_data_to_h5, batch_idx, image_batch, birads_batch, lesions_batch)
+                image_batch, birads_batch, lesions_batch = [], [], []
+                batch_idx += 1
+
+        if image_batch:
+            await asyncio.get_running_loop().run_in_executor(None, self.save_data_to_h5, batch_idx, image_batch, birads_batch, lesions_batch)
+
+
     def convert(self, split: str = 'training'):
         self._init_df(split)
         self.output_dir = os.path.join(self.output_dir, split)
@@ -72,17 +87,5 @@ class VindrH5Converter(BaseH5Converter):
         logging.info(f"File chunk size: {self.chunk_size}")
         logging.info(f"Target HDF5 files to create: {num_hdf5_files}")
 
-        chunks = [all_dicom_paths[i * self.chunk_size:(i + 1) * self.chunk_size] for i in range(num_hdf5_files)]
+        asyncio.run(self.process_dicom_files(all_dicom_paths))
 
-        for i, chunk in enumerate(chunks, start=1):
-            logging.info(f"Processing chunk {i}/{num_hdf5_files}...")
-            images = self._process_dicom_image_in_parallel(chunk)
-            birads = [self.birads_dict[path] for path in chunk]
-            lesions = [self.lesions_dict[path] for path in chunk]
-                
-            if not images:
-                logging.warning(f"Chunk {i} is empty after filtering. Skipping.")
-                continue
-            
-            self.save_data_to_h5(i, images, birads, lesions)
-            
