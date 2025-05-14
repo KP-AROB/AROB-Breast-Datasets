@@ -28,8 +28,11 @@ def crop_to_roi(image: np.array):
 
 
 def resize_square(image: np.array, new_size=224):
-    return cv2.resize(
-        image,
-        (new_size, new_size),
-        interpolation=cv2.INTER_LINEAR,
-    )
+    try:
+        return cv2.resize(
+            image,
+            (new_size, new_size),
+            interpolation=cv2.INTER_LINEAR,
+        )
+    except Exception as e:
+        return None
